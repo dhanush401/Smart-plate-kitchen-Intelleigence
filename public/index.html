@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartPlate – Restaurant Food Waste Management System</title>
+  <meta name="description" content="Professional restaurant food waste tracking, inventory control, and AI-driven reduction management platform.">
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon">🍽️</div>
+        <div class="brand-info">
+          <h1>SmartPlate</h1>
+          <p>Kitchen Intelligence</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item active" data-view="dashboard" id="nav-dashboard">
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a class="nav-item" data-view="food-entry" id="nav-food-entry">
+          <span class="icon">🍛</span>
+          <span>Food Entry</span>
+        </a>
+        <a class="nav-item" data-view="inventory" id="nav-inventory">
+          <span class="icon">📦</span>
+          <span>Inventory</span>
+          <span class="badge badge-amber" id="nav-inventory-badge" style="display:none">0</span>
+        </a>
+        <a class="nav-item" data-view="waste-recording" id="nav-waste-recording">
+          <span class="icon">🗑️</span>
+          <span>Waste Recording</span>
+        </a>
+        <a class="nav-item" data-view="analytics" id="nav-analytics">
+          <span class="icon">📈</span>
+          <span>Analytics</span>
+        </a>
+        <a class="nav-item" data-view="waste-alerts" id="nav-waste-alerts">
+          <span class="icon">⚠️</span>
+          <span>Waste Alerts</span>
+          <span class="badge badge-rose" id="nav-alerts-badge">0</span>
+        </a>
+        <a class="nav-item" data-view="smart-suggestions" id="nav-smart-suggestions">
+          <span class="icon">🤖</span>
+          <span>Smart Suggestions</span>
+          <span class="badge badge-emerald" id="nav-suggestions-badge">5</span>
+        </a>
+        <a class="nav-item" data-view="reports" id="nav-reports">
+          <span class="icon">📋</span>
+          <span>Reports</span>
+        </a>
+        <a class="nav-item" data-view="staff" id="nav-staff">
+          <span class="icon">👨‍🍳</span>
+          <span>Staff Management</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="kitchen-shift-card">
+          <div class="shift-indicator-dot"></div>
+          <div class="shift-details">
+            <h4 id="shift-label">Live Kitchen Shift</h4>
+            <p id="branch-label">Downtown Flagship</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Sticky Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" id="mobileMenuToggle" aria-label="Toggle Navigation">☰</button>
+          <div class="page-title-area">
+            <h2 id="current-view-title">Kitchen Overview & Waste Analytics</h2>
+            <span id="current-view-desc">Live metrics from current prep & service cycles</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="server-status-pill" id="connection-status-pill">
+            <span class="shift-indicator-dot"></span> Backend Connected
+          </div>
+
+          <div class="live-clock-pill" id="liveClock">
+            🕒 --:--:--
+          </div>
+
+          <button class="btn-quick-waste" id="btnOpenWasteModal">
+            <span>🗑️</span>
+            <span>+ Log Food Waste</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Dynamic Content Views -->
+      <main class="content-area">
+        <!-- ========================================================= -->
+        <!-- VIEW 1: DASHBOARD -->
+        <!-- ========================================================= -->
+        <section class="view-section active-view" id="view-dashboard">
+          <!-- 5 Key KPI Metric Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-card-header">
+                <span class="kpi-title">Food Prepared (Today)</span>
+                <div class="kpi-icon-wrap" style="background:var(--accent-blue-dim); color:var(--accent-blue);">🍛</div>
+              </div>
+              <div class="kpi-value" id="kpi-prepared">0.0 <span style="font-size:16px; font-weight:500;">kg</span></div>
+              <div class="kpi-meta">
+                <span class="trend-up">▲ Active Batches</span> in service today
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-card-header">
+                <span class="kpi-title">Food Sold / Consumed</span>
+                <div class="kpi-icon-wrap" style="background:var(--accent-emerald-dim); color:var(--accent-emerald);">🍽️</div>
+              </div>
+              <div class="kpi-value" id="kpi-sold">0.0 <span style="font-size:16px; font-weight:500;">kg</span></div>
+              <div class="kpi-meta">
+                <span class="trend-up">★ Service Efficiency</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-card-header">
+                <span class="kpi-title">Current Leftover</span>
+                <div class="kpi-icon-wrap" style="background:var(--accent-amber-dim); color:var(--accent-amber);">🍲</div>
+              </div>
+              <div class="kpi-value" id="kpi-leftover">0.0 <span style="font-size:16px; font-weight:500;">kg</span></div>
+              <div class="kpi-meta">
+                <span>Available for dinner service</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-card-header">
+                <span class="kpi-title">Food Wasted (7 Days)</span>
+                <div class="kpi-icon-wrap" style="background:var(--accent-rose-dim); color:var(--accent-rose);">🗑️</div>
+              </div>
+              <div class="kpi-value" id="kpi-wasted" style="color:var(--accent-rose);">0.0 <span style="font-size:16px; font-weight:500;">kg</span></div>
+              <div class="kpi-meta">
+                <span class="trend-down" id="kpi-waste-count">0 logs recorded</span>
+              </div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-card-header">
+                <span class="kpi-title">Estimated Cost Loss</span>
+                <div class="kpi-icon-wrap" style="background:var(--accent-rose-dim); color:var(--accent-rose);">💸</div>
+              </div>
+              <div class="kpi-value" id="kpi-cost" style="color:var(--accent-rose);">₹0</div>
+              <div class="kpi-meta">
+                <span>Financial impact this week</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dashboard Row 1: Quick Chart & Expiry Alerts Ticker -->
+          <div class="dashboard-row">
+            <div class="card-box">
+              <div class="card-header-flex">
+                <div>
+                  <h3>📈 Waste vs Food Prepared Trend</h3>
+                  <span class="card-subtitle">Daily comparison over the past 7 days</span>
+                </div>
+                <button class="btn-secondary" onclick="App.navigate('analytics')">Full Analytics →</button>
+              </div>
+              <div style="height: 280px; position: relative;">
+                <canvas id="dashboardTrendChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card-box">
+              <div class="card-header-flex">
+                <div>
+                  <h3>⚠️ Urgent Kitchen Alerts</h3>
+                  <span class="card-subtitle">Items needing immediate action</span>
+                </div>
+                <button class="btn-secondary" onclick="App.navigate('waste-alerts')">View All</button>
+              </div>
+              <div id="dashboardAlertsList" style="display:flex; flex-direction:column; gap:10px; max-height:280px; overflow-y:auto;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Dashboard Row 2: Top Wasted Items & Activity Feed -->
+          <div class="dashboard-row">
+            <div class="card-box">
+              <div class="card-header-flex">
+                <div>
+                  <h3>🔥 Top Wasted Food Items</h3>
+                  <span class="card-subtitle">Dishes and ingredients with highest loss volume</span>
+                </div>
+                <button class="btn-secondary" onclick="App.navigate('smart-suggestions')">AI Suggestions →</button>
+              </div>
+              <div class="table-responsive">
+                <table class="custom-table" id="dashboardTopWastedTable">
+                  <thead>
+                    <tr>
+                      <th>Item Name</th>
+                      <th>Quantity Wasted</th>
+                      <th>Impact Level</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card-box">
+              <div class="card-header-flex">
+                <div>
+                  <h3>🕒 Recent Kitchen Activities</h3>
+                  <span class="card-subtitle">Live audit stream by kitchen staff</span>
+                </div>
+              </div>
+              <div id="dashboardActivityList" style="display:flex; flex-direction:column; gap:12px; max-height:270px; overflow-y:auto;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 2: FOOD ENTRY (Preparation Tracking) -->
+        <!-- ========================================================= -->
+        <section class="view-section" id="view-food-entry">
+          <div class="card-box">
+            <div class="controls-bar">
+              <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="foodEntrySearch" placeholder="Search dish, batch number, chef...">
+              </div>
+
+              <div class="filter-group">
+                <select class="custom-select" id="foodEntryCategoryFilter">
+                  <option value="All">All Categories</option>
+                  <option value="Main Course">Main Course</option>
+                  <option value="Appetizer">Appetizer</option>
+                  <option value="Dessert">Dessert</option>
+                  <option value="Soup">Soup</option>
+                  <option value="Beverage">Beverage</option>
+                </select>
+
+                <button class="btn-primary" id="btnOpenAddFoodEntryModal">
+                  <span>➕</span>
+                  <span>Add Prepared Batch</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table" id="foodEntryTable">
+                <thead>
+                  <tr>
+                    <th>Batch #</th>
+                    <th>Dish Name</th>
+                    <th>Category</th>
+                    <th>Prepared</th>
+                    <th>Sold</th>
+                    <th>Leftover</th>
+                    <th>Unit Cost</th>
+                    <th>Chef</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 3: INVENTORY MANAGEMENT -->
+        <!-- ========================================================= -->
+        <section class="view-section" id="view-inventory">
+          <div class="card-box">
+            <div class="controls-bar">
+              <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="inventorySearch" placeholder="Search ingredient, supplier...">
+              </div>
+
+              <div class="filter-group">
+                <select class="custom-select" id="inventoryCategoryFilter">
+                  <option value="All">All Categories</option>
+                  <option value="Produce">Produce</option>
+                  <option value="Dairy">Dairy</option>
+                  <option value="Meat & Poultry">Meat & Poultry</option>
+                  <option value="Seafood">Seafood</option>
+                  <option value="Dry Goods">Dry Goods</option>
+                  <option value="Bakery">Bakery</option>
+                </select>
+
+                <select class="custom-select" id="inventoryStatusFilter">
+                  <option value="All">All Statuses</option>
+                  <option value="lowStock">Low Stock Only</option>
+                  <option value="expiring">Expiring in ≤3 Days</option>
+                </select>
+
+                <button class="btn-primary" id="btnOpenAddInventoryModal">
+                  <span>➕</span>
+                  <span>Add Ingredient</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table" id="inventoryTable">
+                <thead>
+                  <tr>
+                    <th>Ingredient Name</th>
+                    <th>Category</th>
+                    <th>Current Stock</th>
+                    <th>Reorder Level</th>
+                    <th>Cost/Unit</th>
+                    <th>Expiry Date</th>
+                    <th>Expiry Status</th>
+                    <th>Supplier</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 4: WASTE RECORDING -->
+        <!-- ========================================================= -->
+        <section class="view-section" id="view-waste-recording">
+          <div class="card-box">
+            <div class="controls-bar">
+              <div class="search-input-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="wasteSearch" placeholder="Search waste item, notes, staff...">
+              </div>
+
+              <div class="filter-group">
+                <select class="custom-select" id="wasteReasonFilter">
+                  <option value="All">All Reasons</option>
+                  <option value="Over-preparation">Over-preparation</option>
+                  <option value="Expired">Expired</option>
+                  <option value="Burnt / Cooking Error">Burnt / Cooking Error</option>
+                  <option value="Plate Waste">Plate Waste</option>
+                  <option value="Spoilage / Storage Issue">Spoilage / Storage</option>
+                </select>
+
+                <select class="custom-select" id="wasteCategoryFilter">
+                  <option value="All">All Categories</option>
+                  <option value="Prepared Food">Prepared Food</option>
+                  <option value="Raw Ingredient">Raw Ingredient</option>
+                  <option value="Dairy">Dairy</option>
+                  <option value="Bakery">Bakery</option>
+                </select>
+
+                <button class="btn-primary" id="btnOpenAddWasteRecordModal">
+                  <span>🗑️</span>
+                  <span>Record Food Waste</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="custom-table" id="wasteLogsTable">
+                <thead>
+                  <tr>
+                    <th>Item Name</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Est. Loss Cost</th>
+                    <th>Reason</th>
+                    <th>Disposal</th>
+                    <th>Staff Member</th>
+                    <th>Date</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 5: ANALYTICS -->
+        <!-- ========================================================= -->
+        <section class="view-section" id="view-analytics">
+          <div class="controls-bar" style="margin-bottom: 24px;">
+            <div>
+              <h3 style="font-size:18px; font-weight:700;">Comprehensive Waste & Loss Analytics</h3>
+              <p style="font-size:12.5px; color:var(--text-muted);">Visualized historical metrics and reason attribution</p>
+            </div>
+            <div class="filter-group">
+              <button class="btn-secondary active-timeframe" id="timeframe7" onclick="App.setAnalyticsTimeframe('7days')">Last 7 Days</button>
+              <button class="btn-secondary" id="timeframe30" onclick="App.setAnalyticsTimeframe('30days')">Last 30 Days</button>
+            </div>
+          </div>
+
+          <div class="dashboard-row equal-split">
+            <div class="card-box">
+              <h3 style="font-size:15px; font-weight:700; margin-bottom:16px;">📊 Food Waste vs Prepared Volume</h3>
+              <div style="height: 290px; position: relative;">
+                <canvas id="analyticsWasteTrendChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card-box">
+              <h3 style="font-size:15px; font-weight:700; margin-bottom:16px;">🎯 Waste Breakdown by Reason</h3>
+              <div style="height: 290px; position: relative;">
+                <canvas id="analyticsReasonChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-row equal-split">
+            <div class="card-box">
+              <h3 style="font-size:15px; font-weight:700; margin-bottom:16px;">💸 Financial Loss Impact Over Time</h3>
+              <div style="height: 290px; position: relative;">
+                <canvas id="analyticsCostTrendChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card-box">
+              <h3 style="font-size:15px; font-weight:700; margin-bottom:16px;">🔥 Top Wasted Items Volume (kg)</h3>
+              <div style="height: 290px; position: relative;">
+                <canvas id="analyticsTopItemsChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 6: WASTE ALERTS -->
+        <!-- ========================================================= -->
+        <section class="view-section" id="view-waste-alerts">
+          <div class="controls-bar">
+            <div>
+              <h3 style="font-size:18px; font-weight:700;">Active Kitchen Waste Alerts</h3>
+              <p style="font-size:12.5px; color:var(--text-muted);">Automated detection of near-expiry, over-prep, and repetitive waste patterns</p>
+            </div>
+            <div class="filter-group">
+              <button class="btn-secondary" onclick="App.filterAlerts('all')">All Alerts</button>
+              <button class="btn-secondary" onclick="App.filterAlerts('expiry')">Near-Expiry / Expired</button>
+              <button class="btn-secondary" onclick="App.filterAlerts('pattern')">High Waste Pattern</button>
+              <button class="btn-secondary" onclick="App.filterAlerts('overprep')">Over-Prep</button>
+            </div>
+          </div>
+
+          <div id="alertsContainer">
+            <!-- Dynamically populated alert cards -->
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 7: SMART SUGGESTIONS -->
+        <!-- ========================================================= -->
+        <section class="view-section" id="view-smart-suggestions">
+          <div class="controls-bar" style="margin-bottom: 24px;">
+            <div>
+              <h3 style="font-size:18px; font-weight:700;">🤖 AI-Powered Waste Reduction Recommendations</h3>
+              <p style="font-size:12.5px; color:var(--text-muted);">Intelligent heuristics analyzing kitchen history to maximize savings and zero-waste compliance</p>
+            </div>
+          </div>
+
+          <div class="suggestions-grid" id="suggestionsContainer">
+            <!-- Dynamic suggestion cards -->
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 8: REPORTS -->
+        <!-- ========================================================= -->
+        <section class="view-section" id="view-reports">
+          <div class="card-box" style="margin-bottom: 24px;">
+            <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">Generate Food Waste & Inventory Audit Report</h3>
+            <div class="controls-bar">
+              <div class="filter-group" style="flex-wrap: wrap;">
+                <div>
+                  <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">REPORT TYPE</label>
+                  <select class="custom-select" id="reportTypeSelect">
+                    <option value="waste">Food Waste Audit Report</option>
+                    <option value="prep">Food Preparation & Consumption Report</option>
+                    <option value="inventory">Inventory Stock & Expiry Valuation</option>
+                    <option value="staff">Staff Waste Compliance Scorecard</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">START DATE</label>
+                  <input type="date" class="custom-input" id="reportStartDate">
+                </div>
+
+                <div>
+                  <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">END DATE</label>
+                  <input type="date" class="custom-input" id="reportEndDate">
+                </div>
+
+                <div>
+                  <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">&nbsp;</label>
+                  <button class="btn-primary" id="btnGenerateReport">Generate Report</button>
+                </div>
+              </div>
+
+              <div class="filter-group">
+                <button class="btn-secondary" id="btnExportCsv">📥 Export to CSV</button>
+                <button class="btn-secondary" onclick="window.print()">🖨️ Print / PDF</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Report Output Container -->
+          <div class="card-box" id="reportOutputCard">
+            <div class="card-header-flex">
+              <div>
+                <h3 id="reportTitle">Report Preview</h3>
+                <span id="reportMeta" class="card-subtitle">Loading records...</span>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table" id="reportTable">
+                <thead></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 9: STAFF MANAGEMENT -->
+        <!-- ========================================================= -->
+        <section class="view-section" id="view-staff">
+          <div class="controls-bar">
+            <div>
+              <h3 style="font-size:18px; font-weight:700;">Kitchen Staff & Activity Tracking</h3>
+              <p style="font-size:12.5px; color:var(--text-muted);">Manage kitchen team roles, shifts, and accountable waste compliance</p>
+            </div>
+
+            <button class="btn-primary" id="btnOpenAddStaffModal">
+              <span>➕</span>
+              <span>Add Staff Member</span>
+            </button>
+          </div>
+
+          <div class="staff-grid" id="staffGridContainer">
+            <!-- Staff cards populated dynamically -->
+          </div>
+
+          <div class="card-box" style="margin-top: 28px;">
+            <div class="card-header-flex">
+              <div>
+                <h3>📜 Full Kitchen Activity Audit Trail</h3>
+                <span class="card-subtitle">Timestamped actions logged by team members</span>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table" id="staffActivityTable">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Activity Type</th>
+                    <th>Description</th>
+                    <th>Staff Member</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: ADD / EDIT FOOD ENTRY -->
+  <!-- ========================================================= -->
+  <div class="modal-backdrop" id="modalFoodEntry">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="foodEntryModalTitle">Add Prepared Food Batch</h3>
+        <button class="btn-close-modal" onclick="App.closeModal('modalFoodEntry')">&times;</button>
+      </div>
+      <form id="foodEntryForm">
+        <input type="hidden" id="foodEntryEditId">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Dish Name *</label>
+              <input type="text" id="feDishName" required placeholder="e.g. Hyderabadi Dum Biryani">
+            </div>
+
+            <div class="form-group">
+              <label>Category</label>
+              <select id="feCategory">
+                <option value="Main Course">Main Course</option>
+                <option value="Appetizer">Appetizer</option>
+                <option value="Dessert">Dessert</option>
+                <option value="Soup">Soup</option>
+                <option value="Beverage">Beverage</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Responsible Chef</label>
+              <select id="feChefSelect">
+                <option value="Chef Marcus Vance">Chef Marcus Vance</option>
+                <option value="Priya Sharma">Priya Sharma</option>
+                <option value="Arun Kumar">Arun Kumar</option>
+                <option value="Elena Rostova">Elena Rostova</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Prepared Quantity *</label>
+              <input type="number" step="0.1" min="0.1" id="fePreparedQty" required placeholder="e.g. 25.0">
+            </div>
+
+            <div class="form-group">
+              <label>Unit</label>
+              <select id="feUnit">
+                <option value="kg">kg (Kilograms)</option>
+                <option value="portions">portions</option>
+                <option value="liters">liters</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Sold / Consumed Qty</label>
+              <input type="number" step="0.1" min="0" id="feSoldQty" value="0" placeholder="e.g. 18.0">
+            </div>
+
+            <div class="form-group">
+              <label>Unit Cost (₹)</label>
+              <input type="number" step="1" min="0" id="feUnitCost" value="150" placeholder="e.g. 180">
+            </div>
+
+            <div class="form-group full-width">
+              <label>Preparation Notes / Shift Context</label>
+              <textarea id="feNotes" placeholder="Optional notes on batch, special recipes or customer forecast"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="App.closeModal('modalFoodEntry')">Cancel</button>
+          <button type="submit" class="btn-primary" id="feSubmitBtn">Save Batch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: ADD / EDIT INVENTORY ITEM -->
+  <!-- ========================================================= -->
+  <div class="modal-backdrop" id="modalInventory">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="inventoryModalTitle">Add Inventory Ingredient</h3>
+        <button class="btn-close-modal" onclick="App.closeModal('modalInventory')">&times;</button>
+      </div>
+      <form id="inventoryForm">
+        <input type="hidden" id="inventoryEditId">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Ingredient Name *</label>
+              <input type="text" id="invName" required placeholder="e.g. Fresh Heavy Cream (36% Fat)">
+            </div>
+
+            <div class="form-group">
+              <label>Category</label>
+              <select id="invCategory">
+                <option value="Produce">Produce</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Meat & Poultry">Meat & Poultry</option>
+                <option value="Seafood">Seafood</option>
+                <option value="Dry Goods">Dry Goods</option>
+                <option value="Bakery">Bakery</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Unit</label>
+              <select id="invUnit">
+                <option value="kg">kg (Kilograms)</option>
+                <option value="liters">liters</option>
+                <option value="units">units (Pieces/Loaves)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Current Stock *</label>
+              <input type="number" step="0.1" min="0" id="invStock" required placeholder="e.g. 10.5">
+            </div>
+
+            <div class="form-group">
+              <label>Reorder Alert Level *</label>
+              <input type="number" step="0.1" min="0" id="invReorderLevel" required value="5" placeholder="e.g. 5.0">
+            </div>
+
+            <div class="form-group">
+              <label>Cost per Unit (₹)</label>
+              <input type="number" step="1" min="0" id="invUnitCost" value="120" placeholder="e.g. 210">
+            </div>
+
+            <div class="form-group">
+              <label>Expiry Date *</label>
+              <input type="date" id="invExpiryDate" required>
+            </div>
+
+            <div class="form-group full-width">
+              <label>Supplier Name</label>
+              <input type="text" id="invSupplier" placeholder="e.g. Heritage Dairy Farms">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="App.closeModal('modalInventory')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Ingredient</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: RECORD FOOD WASTE -->
+  <!-- ========================================================= -->
+  <div class="modal-backdrop" id="modalWaste">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3>🗑️ Record Food Waste Incident</h3>
+        <button class="btn-close-modal" onclick="App.closeModal('modalWaste')">&times;</button>
+      </div>
+      <form id="wasteForm">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Wasted Item Name *</label>
+              <input type="text" id="wstItemName" required placeholder="e.g. Hyderabadi Dum Biryani or Atlantic Salmon">
+            </div>
+
+            <div class="form-group">
+              <label>Category</label>
+              <select id="wstCategory">
+                <option value="Prepared Food">Prepared Food</option>
+                <option value="Raw Ingredient">Raw Ingredient</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Bakery">Bakery</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Primary Waste Reason *</label>
+              <select id="wstReason" required>
+                <option value="Over-preparation">Over-preparation (Unsold Leftover)</option>
+                <option value="Expired">Expired in Storage</option>
+                <option value="Burnt / Cooking Error">Burnt / Cooking Error</option>
+                <option value="Plate Waste">Customer Plate Waste</option>
+                <option value="Spoilage / Storage Issue">Spoilage / Storage Failure</option>
+                <option value="Contamination">Contamination / Dropped</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Quantity *</label>
+              <input type="number" step="0.1" min="0.1" id="wstQty" required placeholder="e.g. 3.5">
+            </div>
+
+            <div class="form-group">
+              <label>Unit</label>
+              <select id="wstUnit">
+                <option value="kg">kg (Kilograms)</option>
+                <option value="liters">liters</option>
+                <option value="portions">portions</option>
+                <option value="units">units</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Estimated Cost per Unit (₹)</label>
+              <input type="number" step="1" min="0" id="wstUnitCost" value="180" placeholder="e.g. 180">
+            </div>
+
+            <div class="form-group">
+              <label>Disposal Method</label>
+              <select id="wstDisposal">
+                <option value="Compost">Compost</option>
+                <option value="Food Bank Donation">Food Bank Donation</option>
+                <option value="Bio-gas Digester">Bio-gas Digester</option>
+                <option value="Landfill">Landfill</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Logged By (Staff)</label>
+              <select id="wstLoggedBy">
+                <option value="Chef Marcus Vance">Chef Marcus Vance</option>
+                <option value="Priya Sharma">Priya Sharma</option>
+                <option value="Arun Kumar">Arun Kumar</option>
+                <option value="Elena Rostova">Elena Rostova</option>
+                <option value="Karthik Raj">Karthik Raj</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Incident Date</label>
+              <input type="date" id="wstDate">
+            </div>
+
+            <div class="form-group full-width">
+              <label>Root Cause / Notes</label>
+              <textarea id="wstNotes" placeholder="Describe circumstances (e.g. sudden rain caused 30% guest drop, grill overheating)"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="App.closeModal('modalWaste')">Cancel</button>
+          <button type="submit" class="btn-primary" style="background:linear-gradient(135deg,#ef4444,#dc2626);">Log Waste Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: ADD STAFF MEMBER -->
+  <!-- ========================================================= -->
+  <div class="modal-backdrop" id="modalStaff">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3>👨‍🍳 Add Kitchen Team Member</h3>
+        <button class="btn-close-modal" onclick="App.closeModal('modalStaff')">&times;</button>
+      </div>
+      <form id="staffForm">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Full Name *</label>
+              <input type="text" id="staffName" required placeholder="e.g. David Miller">
+            </div>
+
+            <div class="form-group">
+              <label>Kitchen Role *</label>
+              <select id="staffRole">
+                <option value="Executive Chef">Executive Chef</option>
+                <option value="Sous Chef">Sous Chef</option>
+                <option value="Line Cook">Line Cook</option>
+                <option value="Pastry Chef">Pastry Chef</option>
+                <option value="Inventory Specialist">Inventory Specialist</option>
+                <option value="Kitchen Steward">Kitchen Steward</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Shift Schedule</label>
+              <select id="staffShift">
+                <option value="Morning (06:00 - 15:00)">Morning (06:00 - 15:00)</option>
+                <option value="Evening (14:00 - 23:00)">Evening (14:00 - 23:00)</option>
+                <option value="Full Day (09:00 - 18:00)">Full Day (09:00 - 18:00)</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <label>Phone / Contact</label>
+              <input type="text" id="staffContact" placeholder="+91 98450 00000">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="App.closeModal('modalStaff')">Cancel</button>
+          <button type="submit" class="btn-primary">Add Team Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Core Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
