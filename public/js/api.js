@@ -1,5 +1,7 @@
 // SmartPlate API Client with LocalStorage Fallback
-const API_BASE = '/api';
+const API_BASE = (typeof window !== 'undefined' && window.location.protocol === 'file:') 
+  ? 'http://localhost:3000/api' 
+  : '/api';
 
 const API = {
   isOnline: true,
